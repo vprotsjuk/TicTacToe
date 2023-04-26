@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div>
+    <div><input type="text" id="game_name" name="name"></div>
+    <div><input type="password" id="password" name="password"></div>
+    <div><button id="btn_create_game">Create Game</button></div>
+</div>
+<div>
+    <div><input text="text" id="player_name" name="name"></div>
+    <div><input text="text" id="mark" name="symbol"></div>
+    <div><button id="btn_join_game">Join game</button></div>
+</div>
+<script>
+
+
+    const options = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+    };
+    let gameName = document.getElementById("game_name");
+    let password = document.getElementById("password");
+    let btn_create_game = document.getElementById("btn_create_game");
+
+    let player_name = document.getElementById("player_name");
+    let mark = document.getElementById("mark");
+    let btn_join_game = document.getElementById("btn_join_game");
+
+
+
+
+
+    btn_create_game.onclick = ()=>{
+        const createGame = {"game":{"name": gameName.value, "password": password.value}};
+        options.body = JSON.stringify(createGame);
+        let res = fetch("/create_game", options);
+        res.then(r=>r.json()).then(response => {
+                if(response.success)
+                {
+                    alert("Game created");
+
+                }
+                else
+                {
+                    alert(response.error);
+                }
+        });
+    }
+
+    btn_join_game.onclick = ()=>{
+        const joinGame = {
+                            "game":{"name": gameName.value, "password": password.value},
+                            "player":{"name":player_name.value, "symbol":mark.value}
+                         };
+        options.body = JSON.stringify(joinGame);
+        let res = fetch("/add_player", options);
+        res.then(r=>r.json()).then(response => {
+                if(response.success)
+                {
+                    alert("Player joined");
+                    setInterval(updateField,1000);
+                }
+                else
+                {
+                    alert(response.error);
+                }
+        });
+    }
+
+    const fieldSize = 9;
+    let ticTacToeTable = document.createElement("table");
+    for (let i = 0; i < fieldSize; i++) {
+        let row = document.createElement("tr");
+            for (let j = 0; j < fieldSize; j++) {
+                let cell = document.createElement("td");
+                cell.setAttribute("data-row",i+1);
+                cell.setAttribute("data-col",j+1);
+                cell.onclick = ()=>{
+                    const data = {
+                        "game":{ name:  gameName.value, password: password.value},
+                        "player":{name: player_name.value, symbol: mark.value},
+                        coordinate: {"row":i+1, "col":j+1}
+                    };
+                    options.body = JSON.stringify(data);
+                    let res = fetch("/move", options);
+                    res.then(r => r.json()).then(response => {
+                        if(response.success)
+                        {
+                            cell.innerHTML = mark.value;
+                        }
+                    });
+                }
+                cell.innerHTML = '-';
+                row.appendChild(cell);
+            }
+        ticTacToeTable.appendChild(row);
+    }
+    document.body.appendChild(ticTacToeTable);
+
+    function updateField()
+    {
+        const updateGame = {"game":{"name": gameName.value, "password": password.value}};
+        options.body = JSON.stringify(updateGame);
+        let res = fetch("/field", options);
+        res.then(r=>r.json()).then(response => {
+                if(response.success)
+                {
+                    for(var i = 1; i<=fieldSize; i++)
+                    {
+                        for(var j=1; j<=fieldSize; j++)
+                        {
+                            var selector = '[data-row="'+i+'"][data-col="'+j+'"]';
+                            ticTacToeTable.querySelector(selector).innerHTML = response.field[i][j];
+                        }
+                    }
+                }
+                else
+                {
+                    console.log(response.error);
+                }
+        });
+    }
+
+
+
+</script>
+</body>
+</html>
